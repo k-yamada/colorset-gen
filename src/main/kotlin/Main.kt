@@ -1,9 +1,3 @@
-import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.databind.MapperFeature
-import com.fasterxml.jackson.dataformat.xml.JacksonXmlModule
-import com.fasterxml.jackson.dataformat.xml.XmlMapper
-import com.fasterxml.jackson.module.kotlin.readValue
-import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import kotlinx.cli.ArgParser
 import kotlinx.cli.ArgType
 import kotlinx.cli.required
@@ -92,16 +86,6 @@ internal fun readColors(filePath: String): List<Color> {
     return result
 }
 
-internal val kotlinXmlMapper = XmlMapper(JacksonXmlModule().apply {
-    setDefaultUseWrapper(false)
-}).registerKotlinModule()
-    .configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true)
-    .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-
-internal inline fun <reified T : Any> parseAs(path: String): T {
-    return kotlinXmlMapper.readValue(File(path))
-}
-
 fun main(args: Array<String>) {
     val parser = ArgParser("colorset-gen")
     val input by parser.option(ArgType.String, shortName = "i", description = "Input colors.xml").required()
@@ -109,11 +93,10 @@ fun main(args: Array<String>) {
     parser.parse(args)
 
     val colors = readColors(input)
-    println(colors)
     colors.forEach {
-        val colorsetDir = File("$output/${it.name}.colorset/")
-        colorsetDir.mkdir()
-        val file = File(colorsetDir, "Contents.json")
+        val dir = File("$output/${it.name}.colorset/")
+        dir.mkdir()
+        val file = File(dir, "Contents.json")
         file.writeText(it.colorsetText)
     }
 }
